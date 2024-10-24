@@ -12,7 +12,9 @@
 typedef enum {
     READY,
     RUNNING,
-    TERMINATED
+    TERMINATED,
+    BLOCKED,
+    WAITING
 } ProcessState;
 
 typedef struct {
@@ -30,6 +32,7 @@ typedef struct {
     int* stack;
     int stack_size;
     ProcessState state;
+    int priority; 
     MessageQueue msg_queue; 
 } PCB;
 
@@ -53,13 +56,12 @@ void kernel_init() {
     kernel->heap_size = KERNEL_HEAP_SIZE;
     kernel->current_index = 0; 
 
-    
     for (int i = 0; i < MAX_PROCESSES; i++) {
         kernel->process_list[i].msg_queue.message_count = 0;
     }
 }
 
-PCB* kernel_create_process(char* name, int stack_size) {
+PCB* kernel_create_process(char* name, int stack_size, int priority) {
     if (kernel->process_count >= MAX_PROCESSES) {
         printf("Error: Maximum process limit reached.\n");
         return NULL;
@@ -71,6 +73,7 @@ PCB* kernel_create_process(char* name, int stack_size) {
     process->stack = (int*)malloc(stack_size);
     process->stack_size = stack_size;
     process->state = READY;
+    process->priority = priority;
     process->msg_queue.message_count = 0; 
     return process;
 }
@@ -98,23 +101,32 @@ void kernel_schedule() {
         printf("No processes to schedule.\n");
         return;
     }
-    int original_index = kernel->current_index;
-    do {
-        if (kernel->process_list[kernel->current_index].state == READY) {
-            kernel_switch_process(&kernel->process_list[kernel->current_index]);
-            printf("Running process %s\n", kernel->current_process->name);
-            break;
+    
+    
+    int highest_priority = -1;
+    int next_process_index = -1;
+
+    for (int i = 0; i < kernel->process_count; i++) {
+        if (kernel->process_list[i].state == READY && kernel->process_list[i].priority > highest_priority) {
+            highest_priority = kernel->process_list[i].priority;
+            next_process_index = i;
         }
-        kernel->current_index = (kernel->current_index + 1) % kernel->process_count;
-    } while (kernel->current_index != original_index);
+    }
+
+    if (next_process_index != -1) {
+        kernel_switch_process(&kernel->process_list[next_process_index]);
+        printf("Running process %s with priority %d\n", kernel->current_process->name, kernel->current_process->priority);
+    } else {
+        printf("No READY process found.\n");
+    }
 }
 
 void kernel_display_processes() {
     printf("Process List:\n");
     for (int i = 0; i < kernel->process_count; i++) {
         PCB* p = &kernel->process_list[i];
-        printf("PID: %d, Name: %s, State: %s\n", p->pid, p->name, 
-               p->state == READY ? "READY" : (p->state == RUNNING ? "RUNNING" : "TERMINATED"));
+        printf("PID: %d, Name: %s, State: %s, Priority: %d\n", p->pid, p->name, 
+               p->state == READY ? "READY" : (p->state == RUNNING ? " RUNNING" : (p->state == TERMINATED ? "TERMINATED" : (p->state == BLOCKED ? "BLOCKED" : "WAITING"))), p->priority);
     }
 }
 
@@ -141,25 +153,59 @@ Message* receive_message(PCB* process) {
     return msg;
 }
 
+
+void* kernel_malloc(PCB* process, int size) {
+    if (size > kernel->heap_size) {
+        printf("Not enough heap space for process %s\n", process->name);
+        return NULL;
+    }
+    void* allocated_memory = kernel->heap;
+    kernel->heap += size;
+    kernel->heap_size -= size;
+    return allocated_memory;
+}
+
+void kernel_free(PCB* process, void* memory, int size) {
+    kernel->heap -= size;
+    kernel->heap_size += size;
+}
+
+
+PCB* sys_create_process(char* name, int stack_size, int priority) {
+    return kernel_create_process(name, stack_size, priority);
+}
+
+void sys_terminate_process(PCB* process) {
+    kernel_terminate_process(process);
+}
+
+void sys_send_message(PCB* recipient, const char* message_content) {
+    send_message(recipient, message_content);
+}
+
+Message* sys_receive_message(PCB* process) {
+    return receive_message(process);
+}
+
 void kernel_main() {
     kernel_init();
-    PCB* process1 = kernel_create_process("Process 1", 1024);
-    PCB* process2 = kernel_create_process("Process 2", 1024);
-    PCB* process3 = kernel_create_process("Process 3", 1024);
+    PCB* process1 = sys_create_process("Process 1", 1024, 2);
+    PCB* process2 = sys_create_process("Process 2", 1024, 1);
+    PCB* process3 = sys_create_process("Process 3", 1024, 3);
 
     kernel_schedule(); 
-    send_message(process2, "Hello from Process 1");
+    sys_send_message(process2, "Hello from Process 1");
     kernel_schedule(); 
-    send_message(process3, "Hello from Process 2");
+    sys_send_message(process3, "Hello from Process 2");
     kernel_schedule(); 
 
-    Message* msg = receive_message(process2);
+    Message* msg = sys_receive_message(process2);
     if (msg) {
         printf("Process 2 received message: %s\n", msg->content);
         free(msg->content);
     }
 
-    kernel_terminate_process(process2);
+    sys_terminate_process(process2);
     kernel_display_processes(); 
     kernel_schedule(); 
 }
