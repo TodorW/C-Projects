@@ -1,8 +1,9 @@
-Here's a detailed and professional README file for your ZephyrOS project, drawing on everything we've discussed. This document covers the purpose, features, structure, and technical aspects of your operating system.
 
 ---
 
 # ZephyrOS
+
+![ZephyrOS Logo](ZephyrOS.png)
 
 **ZephyrOS** is a lightweight, modular operating system designed and implemented in C. Its focus is on simplicity, efficiency, and scalability. ZephyrOS is built from the ground up, aiming to provide a minimal but flexible foundation for operating system design, kernel development, and system-level programming. It supports basic multitasking, memory management, process scheduling, and file system operations, all of which are essential for modern operating systems.
 
