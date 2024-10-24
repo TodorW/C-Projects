@@ -59,16 +59,94 @@ The source code for ZephyrOS is organized as follows:
 
 ```
 /ZephyrOS
+├── /bootloader                # Bootloader code (e.g., GRUB config, or custom bootloader)
+│   ├── bootloader.asm         # Assembly code for booting the OS
+│   ├── boot.c                 # C code for initializing the boot process
+│   ├── disk_io.c              # Functions for reading from disk
+│   ├── elf_loader.c           # Code to load the kernel from an ELF file
+│   └── gdt.c                  # Global Descriptor Table setup
 │
-├── /bootloader        # Bootloader code (e.g., GRUB config, or custom bootloader)
-├── /kernel            # Core kernel code (scheduler, memory, system calls, etc.)
-├── /drivers           # Device drivers for keyboard, disk, etc.
-├── /shell             # Shell and user interaction layer
-├── /fs                # File system implementations
-├── /lib               # Basic libraries (e.g., libc implementation)
-├── /include           # Header files and system-wide definitions
-├── /userland          # User-space applications and programs
-└── /docs              # Documentation for the OS, API, and internal structures
+├── /kernel                    # Core kernel code (scheduler, memory, system calls, etc.)
+│   ├── kernel.c               # Main kernel entry point
+│   ├── scheduler.c            # Implementation of scheduling algorithms
+│   ├── interrupts.c           # Interrupt handling routines
+│   ├── syscalls.c             # System call implementations
+│   ├── process.c              # Process management functions
+│   └── memory.c               # Basic memory management functions
+│
+├── /memory_management          # Memory management functionalities
+│   ├── paging.c                # Implementation of paging and virtual memory
+│   ├── heap.c                  # Dynamic memory allocation (malloc/free)
+│   ├── memory_map.c            # Memory mapping functions
+│   └── bitmap.c                # Bitmap for tracking free memory blocks
+│
+├── /process_management         # Process management functionalities
+│   ├── process.c               # Process creation, termination, and management
+│   ├── context_switch.c         # Context switching routines
+│   ├── ipc.c                   # Inter-Process Communication mechanisms (e.g., pipes, message queues)
+│   └── scheduler.c             # Scheduling algorithms (e.g., Round Robin, Priority)
+│
+├── /fs                        # File system implementations
+│   ├── fs.c                   # File system interface and management
+│   ├── fat.c                  # Implementation of FAT file system
+│   ├── ext4.c                 # Implementation of ext4 file system
+│   ├── file_ops.c             # File operations (open, read, write, close)
+│   └── directory.c            # Directory management functions
+│
+├── /drivers                   # Device drivers for keyboard, disk, etc.
+│   ├── keyboard.c             # Keyboard driver implementation
+│   ├── mouse.c                # Mouse driver implementation
+│   ├── disk.c                 # Disk driver for reading/writing to storage
+│   ├── network.c              # Network device driver
+│   └── serial.c               # Serial port driver for console output
+│
+├── /shell                     # Shell and user interaction layer
+│   ├── shell.c                # Main shell program
+│   ├── commands.c             # Implementation of shell commands (e.g., ls, cd)
+│   └── input.c                # Handling user input and command parsing
+│
+├── /lib                       # Basic libraries (e.g., libc implementation)
+│   ├── libc.c                 # Implementation of standard C library functions
+│   ├── string.c               # String manipulation functions
+│   ├── math.c                 # Basic math functions
+│   └── utils.c                # Utility functions for kernel and userland
+│
+├── /userland                  # User-space applications and programs
+│   ├── init.c                 # Initial userland program that starts the shell
+│   ├── editor.c               # Simple text editor application
+│   ├── file_manager.c         # File management utility
+│   └── user_programs/         # Directory for additional userland applications
+│
+├── /docs                      # Documentation for the OS, API, and internal structures
+│   ├── README.md              # Overview of the OS and its features
+│   ├── API.md                 # Documentation for system calls and APIs
+│   ├── USER_GUIDE.md          # User manual for operating the OS
+│   └── DEVELOPER_GUIDE.md     # Developer documentation for contributing to the OS
+│
+├── /build_system              # Build system for compiling the OS
+│   ├── Makefile               # Main build script for compiling the OS
+│   ├── build.sh               # Shell script to automate the build process
+│   └── config.mk              # Configuration settings for the build system
+│
+├── /cross_compiler_toolchain  # Cross-compiler toolchain setup
+│   ├── toolchain_setup.sh     # Script to set up the cross-compiler
+│   ├── gcc_configure.sh      # Configuration script for GCC
+│   └── binutils_configure.sh # Configuration script for Binutils
+│
+├── /testing_debugging_tools   # Testing and debugging tools
+│   ├── test_kernel.c          # Unit tests for kernel functionalities
+│   ├── test_userland.c        # Unit tests for userland applications
+│   ├── debug.c               # Debugging utilities and logging functions
+│   └── gdb_setup.sh          # Script to set up GDB for debugging
+│
+├── /networking               # Networking stack implementation
+│   ├── network.c             # Networking stack implementation (TCP/IP)
+│   ├── socket.c              # Socket API implementation for userland
+│   ├── dns.c                 # DNS query functions
+│   └── ping.c                # Implementation of the ping utility
+│
+└── /gui                       # Graphical User Interface components
+    # (To be implemented)
 ```
 
 ---
