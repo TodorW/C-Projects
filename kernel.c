@@ -3,12 +3,18 @@
 #include <string.h>
 #define KERNEL_HEAP_SIZE 1024
 #define KERNEL_STACK_SIZE 1024
+#define MAX_PROCESSES 10
+typedef enum {
+    READY,
+    RUNNING,
+    TERMINATED
+} ProcessState;
 typedef struct {
     int pid;
     char* name;
     int* stack;
     int stack_size;
-    int state;
+    ProcessState state;
 } PCB;
 typedef struct {
     PCB* current_process;
@@ -17,25 +23,53 @@ typedef struct {
     char* heap;
     int heap_size;
 } Kernel;
+Kernel* kernel;
 void kernel_init() {
-    Kernel* kernel = (Kernel*)malloc(sizeof(Kernel));
+    kernel = (Kernel*)malloc(sizeof(Kernel));
     kernel->current_process = NULL;
-    kernel->process_list = (PCB*)malloc(sizeof(PCB) * 10);
+    kernel->process_list = (PCB*)malloc(sizeof(PCB) * MAX_PROCESSES);
     kernel->process_count = 0;
     kernel->heap = (char*)malloc(KERNEL_HEAP_SIZE);
-    kernel->heap_size = KERNEL_HEAP_SIZE;}
+    kernel->heap_size = KERNEL_HEAP_SIZE;
+}
 PCB* kernel_create_process(char* name, int stack_size) {
+    if (kernel->process_count >= MAX_PROCESSES) {
+        printf("Error: Maximum process limit reached.\n");
+        return NULL;
+    }
     PCB* process = &kernel->process_list[kernel->process_count++];
     process->pid = kernel->process_count;
     process->name = (char*)malloc(strlen(name) + 1);
     strcpy(process->name, name);
     process->stack = (int*)malloc(stack_size);
     process->stack_size = stack_size;
-    process->state = 0;
-    return process;}
+    process->state = READY;
+    return process;
+}
+void kernel_terminate_process(PCB* process) {
+    if (process) {
+        process->state = TERMINATED;
+        free(process->name);
+        free(process->stack);
+        process->name = NULL;
+        process->stack = NULL;
+    }
+}
 void kernel_switch_process(PCB* new_process) {
-    if (kernel->current_process != NULL) {}
-    kernel->current_process = new_process;}
+    if (kernel->current_process != NULL) {
+        kernel->current_process->state = READY; 
+    }
+    kernel->current_process = new_process;
+    kernel->current_process->state = RUNNING; 
+}
+void kernel_display_processes() {
+    printf("Process List:\n");
+    for (int i = 0; i < kernel->process_count; i++) {
+        PCB* p = &kernel->process_list[i];
+        printf("PID: %d, Name: %s, State: %s\n", p->pid, p->name, 
+               p->state == READY ? "READY" : (p->state == RUNNING ? "RUNNING" : "TERMINATED"));
+    }
+}
 void kernel_main() {
     kernel_init();
     PCB* process1 = kernel_create_process("Process 1", 1024);
@@ -46,7 +80,14 @@ void kernel_main() {
     kernel_switch_process(process2);
     printf("Running process %s\n", process2->name);
     kernel_switch_process(process3);
-    printf("Running process %s\n", process3->name);}
+    printf("Running process %s\n", process3->name);
+    kernel_terminate_process(process2); 
+    kernel_display_processes(); 
+}
 int main() {
     kernel_main();
-    return 0;}
+    free(kernel->process_list);
+    free(kernel->heap);
+    free(kernel);
+    return 0;
+}
