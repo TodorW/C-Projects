@@ -3,9 +3,11 @@
 
 # ZephyrOS
 
-![ZephyrOS Logo](ZephyrOS.png)
-
 **ZephyrOS** is a lightweight, modular operating system designed and implemented in C. Its focus is on simplicity, efficiency, and scalability. ZephyrOS is built from the ground up, aiming to provide a minimal but flexible foundation for operating system design, kernel development, and system-level programming. It supports basic multitasking, memory management, process scheduling, and file system operations, all of which are essential for modern operating systems.
+
+<div align="center">
+  <img src="ZephyrOS.png" alt="ZephyrOS Logo" width="300"/>
+</div>
 
 ---
 
