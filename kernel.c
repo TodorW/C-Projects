@@ -1,9 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h> 
 #define KERNEL_HEAP_SIZE 1024
 #define KERNEL_STACK_SIZE 1024
 #define MAX_PROCESSES 10
+#define TIME_SLICE 5
 typedef enum {
     READY,
     RUNNING,
@@ -22,6 +24,7 @@ typedef struct {
     int process_count;
     char* heap;
     int heap_size;
+    int current_index; 
 } Kernel;
 Kernel* kernel;
 void kernel_init() {
@@ -31,6 +34,7 @@ void kernel_init() {
     kernel->process_count = 0;
     kernel->heap = (char*)malloc(KERNEL_HEAP_SIZE);
     kernel->heap_size = KERNEL_HEAP_SIZE;
+    kernel->current_index = 0; 
 }
 PCB* kernel_create_process(char* name, int stack_size) {
     if (kernel->process_count >= MAX_PROCESSES) {
@@ -62,6 +66,21 @@ void kernel_switch_process(PCB* new_process) {
     kernel->current_process = new_process;
     kernel->current_process->state = RUNNING; 
 }
+void kernel_schedule() {
+    if (kernel->process_count == 0) {
+        printf("No processes to schedule.\n");
+        return;
+    }
+    int original_index = kernel->current_index;
+    do {
+        if (kernel->process_list[kernel->current_index].state == READY) {
+            kernel_switch_process(&kernel->process_list[kernel->current_index]);
+            printf("Running process %s\n", kernel->current_process->name);
+            break;
+        }
+        kernel->current_index = (kernel->current_index + 1) % kernel->process_count;
+    } while (kernel->current_index != original_index);
+}
 void kernel_display_processes() {
     printf("Process List:\n");
     for (int i = 0; i < kernel->process_count; i++) {
@@ -75,19 +94,17 @@ void kernel_main() {
     PCB* process1 = kernel_create_process("Process 1", 1024);
     PCB* process2 = kernel_create_process("Process 2", 1024);
     PCB* process3 = kernel_create_process("Process 3", 1024);
-    kernel_switch_process(process1);
-    printf("Running process %s\n", process1->name);
-    kernel_switch_process(process2);
-    printf("Running process %s\n", process2->name);
-    kernel_switch_process(process3);
-    printf("Running process %s\n", process3->name);
-    kernel_terminate_process(process2); 
+    kernel_schedule(); 
+    kernel_schedule(); 
+    kernel_schedule(); 
+    kernel_terminate_process(process2);
     kernel_display_processes(); 
+    kernel_schedule(); 
 }
 int main() {
     kernel_main();
     free(kernel->process_list);
-    free(kernel->heap);
+    free(kernel-> heap);
     free(kernel);
     return 0;
 }
